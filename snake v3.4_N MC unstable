@@ -1,0 +1,870 @@
+// snake v2 completet redo
+
+#include <iostream>
+#include <random>
+#include <thread> // for time
+using namespace std;
+
+const int boardsize = 11;
+
+int score;
+int highscore = 47;
+int current_highscore = 0;
+int food_map[boardsize][boardsize];
+int player_map[boardsize][boardsize];
+int direction_map_1[boardsize][boardsize];
+int direction_map_2[boardsize][boardsize];
+int direction_map_3[boardsize][boardsize];
+int deadend_map[boardsize+2][boardsize+2];
+int gamestate;
+
+int moves_done;
+int nextmove;
+long long recalculations;
+long long moves_considered;
+int current_moves_considered;
+int moves_since_food;
+int max_moves_since_food;
+
+vector<int> score_list;
+double avg_score;
+
+int deadend_iterations;
+
+//starting position
+int i_player;
+int j_player;
+//now defined in game loop!
+
+int i_player_sug;
+int j_player_sug;
+
+//food position
+int i_food;
+int j_food;
+
+bool alive;
+bool scored;
+bool won;
+bool move_ok;
+bool move_ideal;
+bool forever = true;
+bool corner_changed;
+
+void sleep() {
+    this_thread::sleep_for(std::chrono::milliseconds(10));
+}
+
+void sleep2() {
+    this_thread::sleep_for(std::chrono::milliseconds(20));
+}
+
+void create_board() {
+    for (int i = 0; i < boardsize; i++) {
+        for (int j = 0; j < boardsize; j++) {
+            food_map[i][j] = 0;
+        }
+    }
+}
+
+void player_input() {
+    string input;
+    cin >> input;
+    if (input == "w") {
+        //up
+        i_player = i_player-1;
+    } else if (input == "a") {
+        //left
+        j_player = j_player-1;
+    } else if (input == "s") {
+        //down
+        i_player = i_player+1;
+    } else if (input == "d") {
+        //right
+        j_player = j_player+1;
+    }
+}
+
+void create_player() {
+    for (int i = 0; i < boardsize; i++) {
+        for (int j = 0; j < boardsize; j++) {
+            player_map[i][j] = 0;
+        }
+    }
+}
+
+void update_player() {
+    for (int i = 0; i < boardsize; i++) {
+        for (int j = 0; j < boardsize; j++) {
+            if (player_map[i][j] != 0)
+                player_map[i][j] --;
+        }
+    }
+}
+
+void spawn_new_food() {
+    bool free_space = false;
+    int random_number_1 = 0;
+    int random_number_2 = 0;
+    while (!free_space) {
+        random_device rd;
+        mt19937 gen(rd());
+        uniform_int_distribution<> distribution(0, boardsize-1);
+        random_number_1 = distribution(gen);
+        random_number_2 = distribution(gen);
+        
+        //check if free space
+        if (food_map[random_number_1][random_number_2] == 0 && player_map[random_number_1][random_number_2] == 0) {
+            free_space = true;
+            food_map[random_number_1][random_number_2] = -1;
+        }
+    }
+    i_food = random_number_1;
+    j_food = random_number_2;
+}
+
+void draw_board() {
+    for (int i = 0; i < boardsize; i++) {
+        for (int j = 0; j < boardsize; j++) {
+            if (player_map[i][j] != 0) {
+                cout << "0 ";
+            } else {
+                if (i == i_food && j == j_food) {
+                    cout << "X ";
+                } else {
+                    cout << "- ";
+                }
+            }
+        }
+        cout << "\n";
+    }
+}
+
+void create_deadend_map() {
+    // enter all player positions
+    for (int i = 0; i < boardsize+2; i++) {
+        for (int j = 0; j < boardsize+2; j++) {
+            if (player_map[i-1][j-1] != 0) {
+                deadend_map[i][j] = 1;
+            } else {
+                deadend_map[i][j] = 0;
+            }
+            // draw border
+            if (i == 0 || i == boardsize+1) {
+                deadend_map[i][j] = 3;
+            }
+            if (j == 0 || j == boardsize+1) {
+                deadend_map[i][j] = 3;
+            }
+        }
+    }
+    
+    // iteratively mark fields that border 3 other marked fiels
+    bool new_spot_found = true;
+    int counter = 0;
+    while (new_spot_found) {
+        new_spot_found = false;
+        for (int i = 0; i < boardsize+2; i++) {
+            for (int j = 0; j < boardsize+2; j++) {
+                counter = 0;
+                if (deadend_map[i][j] == 0) {
+                    if (deadend_map[i+1][j] != 0) {
+                        if (i+1 == i_player+1 && j == j_player+1) {
+                            // nothing
+                        } else {
+                            counter ++;
+                        }
+                    }
+                    if (deadend_map[i-1][j] != 0) {
+                        if (i-1 == i_player+1 && j == j_player+1) {
+                            // nothing
+                        } else {
+                            counter ++;
+                        }
+                    }
+                    if (deadend_map[i][j+1] != 0) {
+                        if (i == i_player+1 && j+1 == j_player+1) {
+                            // nothing
+                        } else {
+                            counter ++;
+                        }
+                    }
+                    if (deadend_map[i][j-1] != 0) {
+                        if (i == i_player+1 && j-1 == j_player+1) {
+                            // nothing
+                        } else {
+                            counter ++;
+                        }
+                    }
+                }
+                // if three surrounding:
+                if (counter >= 3) {
+                    deadend_map[i][j] = 2;
+                    new_spot_found = true;
+                    deadend_iterations ++;
+                }
+            }
+        }
+    }
+}
+
+void draw_deadend_map() {
+    cout << "dead end map matrix:" << endl;
+    for (int i = 0; i < boardsize+2; i++) {
+        for (int j = 0; j < boardsize+2; j++) {
+            if (deadend_map[i][j] == 1) {
+                cout << "0 ";
+            } else if (deadend_map[i][j] == 2) {
+                cout << "O ";
+            } else if (deadend_map[i][j] == 3) {
+                cout << "B ";
+            } else {
+                cout << "- ";
+            }
+        }
+        cout << "\n";
+    }
+}
+
+void check_scored() {
+    if (i_player == i_food && j_player == j_food) {
+        scored = true;
+        score ++;
+    }
+}
+
+void check_alive_boundaries() {
+    if (i_player > boardsize-1 || j_player > boardsize-1 || i_player < 0 || j_player < 0)
+        alive = false;
+}
+
+void check_alive_snake() {
+    if (player_map[i_player][j_player] != 0)
+        alive = false;
+}
+
+void check_won() {
+    won = true;
+    for (int i = 0; i < boardsize; i++) {
+        for (int j = 0; j < boardsize; j++) {
+            if (player_map[i][j] == 0) {
+                won = false;
+            }
+        }
+    }
+}
+
+void checks() {
+    check_alive_boundaries();
+    check_alive_snake();
+    check_scored();
+    check_won();
+}
+
+void getmove1() {
+    i_player_sug = i_player;
+    j_player_sug = j_player;
+    
+    if (i_player < i_food) {
+        i_player_sug ++;
+    } else if (i_player > i_food) {
+        i_player_sug --;
+    } else if (j_player < j_food) {
+        j_player_sug ++;
+    } else if (j_player > j_food) {
+        j_player_sug --;
+    }
+}
+
+void getmove2() {
+    i_player_sug = i_player;
+    j_player_sug = j_player;
+    
+    if (j_player < j_food) {
+        j_player_sug ++;
+    } else if (j_player > j_food) {
+        j_player_sug --;
+    } else if (i_player < i_food) {
+        i_player_sug ++;
+    } else if (i_player > i_food) {
+        i_player_sug --;
+    }
+}
+
+
+void getmove3() {
+    i_player_sug = i_player;
+    j_player_sug = j_player;
+    
+    i_player_sug ++;
+}
+
+void getmove4() {
+    i_player_sug = i_player;
+    j_player_sug = j_player;
+    
+    j_player_sug ++;
+}
+
+void getmove5() {
+    i_player_sug = i_player;
+    j_player_sug = j_player;
+    
+    i_player_sug --;
+}
+
+void getmove6() {
+    i_player_sug = i_player;
+    j_player_sug = j_player;
+    
+    j_player_sug --;
+}
+
+void getmove7() {
+    // cout << "HELP I DONT KNOW WHERE TO GO" << endl;
+}
+
+// DEAD END EXPERIMENTAL
+void checkdeadend() {
+    // check if dead end expected
+    if (deadend_map[i_player_sug+1][j_player_sug+1] != 0) {
+        move_ideal = false;
+    } else {
+        move_ideal = true;
+    }
+}
+
+void checkmove() {
+    // check if crash with player
+    if (player_map[i_player_sug][j_player_sug] != 0) {
+        move_ok = false;
+        recalculations ++;
+    // check if crash with walls
+    } else if (i_player_sug < 0) {
+        move_ok = false;
+        recalculations ++;
+    } else if (j_player_sug < 0) {
+        move_ok = false;
+        recalculations ++;
+    } else if (i_player_sug > boardsize-1) {
+        move_ok = false;
+        recalculations ++;
+    } else if (j_player_sug > boardsize-1) {
+        move_ok = false;    
+        recalculations ++;
+    } else {
+        move_ok = true;
+    }
+    current_moves_considered ++;
+    moves_considered ++;
+}
+
+void getmove_state1() {
+    getmove1();
+    checkmove();
+    checkdeadend();
+    if (!move_ok || !move_ideal) {
+        getmove2();
+        checkmove();
+        checkdeadend();
+        if (!move_ok || !move_ideal) {
+            getmove3();
+            checkmove();
+            checkdeadend();
+            if (!move_ok || !move_ideal) {
+                getmove4();
+                checkmove();
+                checkdeadend();
+                if (!move_ok || !move_ideal) {
+                    getmove5();
+                    checkmove();
+                    checkdeadend();
+                    if (!move_ok || !move_ideal) {
+                        getmove6();
+                        checkmove();
+                        checkdeadend();
+                        if (!move_ok || !move_ideal) {
+                            getmove7();
+                            checkmove();
+                            // IGNORE DEAD-END PREDICTION
+                            if (!move_ok) {
+                                getmove1();
+                                checkmove();
+                                checkdeadend();
+                                if (!move_ok) {
+                                    getmove2();
+                                    checkmove();
+                                    checkdeadend();
+                                    if (!move_ok) {
+                                        getmove3();
+                                        checkmove();
+                                        if (!move_ok) {
+                                            getmove4();
+                                            checkmove();
+                                            if (!move_ok) {
+                                                getmove5();
+                                                checkmove();
+                                                if (!move_ok) {
+                                                    getmove6();
+                                                    checkmove();
+                                                    if (!move_ok) {
+                                                        getmove7();
+                                                    } else {
+                                                        i_player = i_player_sug;
+                                                        j_player = j_player_sug;
+                                                    }
+                                                } else {
+                                                    i_player = i_player_sug;
+                                                    j_player = j_player_sug;
+                                                }
+                                            } else {
+                                                i_player = i_player_sug;
+                                                j_player = j_player_sug;
+                                            }
+                                        } else {
+                                            i_player = i_player_sug;
+                                            j_player = j_player_sug;
+                                        }
+                                    } else {
+                                        i_player = i_player_sug;
+                                        j_player = j_player_sug;
+                                    }
+                                } else {
+                                    i_player = i_player_sug;
+                                    j_player = j_player_sug;
+                                }
+                            } else {
+                                i_player = i_player_sug;
+                                j_player = j_player_sug;
+                            }
+                        } else {
+                            i_player = i_player_sug;
+                            j_player = j_player_sug;
+                        }
+                    } else {
+                        i_player = i_player_sug;
+                        j_player = j_player_sug;
+                    }
+                } else {
+                    i_player = i_player_sug;
+                    j_player = j_player_sug;
+                }
+            } else {
+                i_player = i_player_sug;
+                j_player = j_player_sug;
+            }
+        } else {
+            i_player = i_player_sug;
+            j_player = j_player_sug;
+        }
+    } else {
+        i_player = i_player_sug;
+        j_player = j_player_sug;
+    }
+}
+
+
+
+void getmove4s2_2() {
+    j_player_sug = j_player;
+    j_player_sug --;
+    checkmove();
+    if (move_ok) {
+        j_player = j_player_sug;
+        nextmove = 4;
+    } else {
+        cout << "THIS SHOULD NOT HAVE HAPPENED!" << endl;
+        getmove_state1();
+    }
+}
+
+void getmove3s2_2() {
+    i_player_sug = i_player;
+    j_player_sug = j_player;
+
+    i_player_sug --;
+    checkmove();
+    if (move_ok) {
+        i_player = i_player_sug;
+        nextmove = 3;
+    } else {
+        getmove4s2_2();
+    }
+}
+
+void getmove2s2_2() {
+    i_player_sug = i_player;
+    j_player_sug = j_player;
+    
+    j_player_sug ++;
+    checkmove();
+    if (move_ok) {
+        j_player = j_player_sug;
+        nextmove = 2;
+    } else {
+        getmove3s2_2();
+    }
+}
+
+void getmove1s2_2() {
+    i_player_sug = i_player;
+    j_player_sug = j_player;
+
+    i_player_sug ++;
+    checkmove();
+    if (move_ok) {
+        i_player = i_player_sug;
+        nextmove = 1;
+    } else {
+        getmove2s2_2();
+    }
+}
+
+void getmove4s2() {
+    i_player_sug = i_player;
+    j_player_sug = j_player;
+    
+    j_player_sug --;
+    checkmove();
+    if (move_ok) {
+        j_player = j_player_sug;
+        nextmove = 4;
+    } else {
+        getmove1s2_2();
+    }
+}
+
+void getmove3s2() {
+    i_player_sug = i_player;
+    j_player_sug = j_player;
+
+    i_player_sug --;
+    checkmove();
+    if (move_ok) {
+        i_player = i_player_sug;
+        nextmove = 3;
+    } else {
+        getmove4s2();
+    }
+}
+
+void getmove5s2() {
+    i_player_sug = i_player;
+    j_player_sug = j_player;
+    
+    if (i_player > i_food) {
+        i_player_sug --;
+        checkmove();
+        if (move_ok) {
+            i_player = i_player_sug;
+            nextmove = 5;
+        } else {
+            getmove2s2_2();
+            nextmove = 2;
+        }
+    } else {
+        getmove2s2_2();
+        nextmove = 2;
+    }
+}
+
+void getmove_uturn() {
+    i_player_sug = i_player;
+    j_player_sug = j_player;
+    
+    i_player_sug ++;
+    checkmove();
+    if (move_ok) {
+        i_player = i_player_sug;
+        nextmove = 1;
+    } else {
+        getmove2s2_2();
+        nextmove = 2;
+    }
+}
+
+void getmove_down() {
+    //
+}
+
+void getmove2s2() {
+    i_player_sug = i_player;
+    j_player_sug = j_player;
+    
+    //check for food
+    if (j_player == j_food) {
+        //go up towards food
+        getmove5s2();
+    } else {
+        j_player_sug ++;
+        checkmove();
+        if (move_ok) {
+            j_player = j_player_sug;
+            nextmove = 2;
+        } else {
+            getmove3s2();
+        }
+    }
+}
+
+void getmove1s2() {
+    i_player_sug = i_player;
+    j_player_sug = j_player;
+
+    i_player_sug ++;
+    checkmove();
+    if (move_ok) {
+        i_player = i_player_sug;
+        nextmove = 1;
+    } else {
+        getmove2s2();
+    }
+}
+
+void getmove_state2() {
+    switch(nextmove) {
+        case 1:
+            getmove1s2();
+            break;
+        case 2:
+            getmove2s2();
+            break;
+        case 3:
+            getmove3s2();
+            break;
+        case 4:
+            getmove4s2();
+            break;
+        case 5:
+            getmove5s2();
+            break;
+        case 6:
+            getmove_down();
+        default:
+            getmove1s2();
+            break;
+    }
+}
+
+
+void create_direction_1_2() {
+    for (int i = 0; i < boardsize; i++) {
+        for (int j = 0; j < boardsize; j++) {
+            if (i % 2 == 0) {
+                direction_map_1[i][j] = 2;
+            } else {
+                direction_map_1[i][j] = 4;
+            }
+            if (j % 2 == 0) {
+                direction_map_2[i][j] = 1;
+            } else {
+                direction_map_2[i][j] = 3;
+            }
+        }
+    }
+}
+
+void create_direction_3() {
+    for (int i = 0; i < boardsize; i++) {
+        for (int j = 0; j < boardsize; j++) {
+            
+            if (j % 2 == 0) {
+                direction_map_3[i][j] = 1;
+            } else if (j % 2 != 0) {
+                direction_map_3[i][j] = 3;
+            }
+            if (i == 1 && j % 2 != 0) {
+                direction_map_3[i][j] = 2;
+            } else if(i == boardsize-1 && j % 2 == 0) {
+                direction_map_3[i][j] = 2;
+            }
+            if (j == boardsize-2) {
+                if (i % 2 == 0) {
+                    direction_map_3[i][j] = 2;
+                } else {
+                    direction_map_3[i][j] = 3;
+                }
+            } else if(j == boardsize-1) {
+                if (i % 2 == 0) {
+                    direction_map_3[i][j] = 3;
+                } else {
+                    direction_map_3[i][j] = 4;
+                }
+            }
+            if (i == 0) {
+                direction_map_3[i][j] = 4;
+            }
+            if (i == 0 && j == 0) {
+                direction_map_3[i][j] = 1;
+            }
+        }
+    }
+}
+
+void check_corner() {
+    if (i_food == 0 && j_food == boardsize-1) {
+        direction_map_3[1][boardsize-1] = 3;
+        corner_changed = true;
+    }
+}
+
+void getmove_state3() {
+    // mix between state 2 and state 4
+    // go in pattern and skip columns if no food
+    // going up from the bottom to pick up food and turning back down
+    
+    // later: come down from the top as well
+}
+
+void getmove_state4() {
+    if (corner_changed) {
+        direction_map_3[1][boardsize-1] = 4;
+        corner_changed = false;
+    }
+    check_corner();
+    i_player_sug = i_player;
+    j_player_sug = j_player;
+    switch(direction_map_3[i_player][j_player]) {
+        case 1:
+            i_player_sug ++;
+            break;
+        case 2:
+            j_player_sug ++;
+            break;
+        case 3:
+            i_player_sug --;
+            break;
+        case 4:
+            j_player_sug --;
+            break;
+        default:
+            getmove_state1();
+            break;
+    }
+    checkmove();
+    if (move_ok) {
+        i_player = i_player_sug;
+        j_player = j_player_sug;
+    } else {
+        cout << "MOVE NOT POSSIBLE... LOOKING FOR SOLUTIONS!!!" << endl;
+        getmove_state1();
+    }
+}
+
+
+
+void draw_direction_3() {
+    cout << "direction matrix 3:\n" << endl;
+    for (int i = 0; i < boardsize; i++) {
+        for (int j = 0; j < boardsize; j++) {
+            cout << direction_map_3[i][j] << " ";
+        }
+        cout << "" << endl;
+    }
+}
+
+void draw_direction_1_2() {
+    cout << "direction matrix 1:\n" << endl;
+    for (int i = 0; i < boardsize; i++) {
+        for (int j = 0; j < boardsize; j++) {
+            cout << direction_map_1[i][j] << " ";
+        }
+        cout << "" << endl;
+    }
+    cout << "direction matrix 2:\n" << endl;
+    for (int i = 0; i < boardsize; i++) {
+        for (int j = 0; j < boardsize; j++) {
+            cout << direction_map_2[i][j] << " ";
+        }
+        cout << "" << endl;
+    }
+}
+
+void getmove() {
+    if (score >= 4*boardsize-4) {
+        getmove_state1();       // 4
+        gamestate = 1;      // 4
+    } else if (score >= 2*boardsize) {
+        getmove_state1();       // 2
+        gamestate = 1;      // 2
+    } else {
+        getmove_state1();
+        gamestate = 1;
+    }
+}
+
+void game() {
+    while (forever) {
+        alive = true;
+        create_player();
+        create_board();
+        scored = true;
+        score = 1;
+        moves_done = 0;
+        i_player = (boardsize-1)/2;
+        j_player = (boardsize-1)/2;
+        recalculations = 0;
+        moves_considered = 0;
+        current_moves_considered = 0;
+        create_direction_3();
+        max_moves_since_food = 0;
+        moves_since_food = 0;
+        avg_score = 0;
+
+        while (alive) {
+            checks();
+            if (scored) {
+                spawn_new_food(); //spawn new food
+                scored = false;
+                moves_since_food = 0;
+            } else {
+                update_player();
+            }
+            player_map[i_player][j_player] = score; //draw new
+            if (moves_since_food > max_moves_since_food) {
+                max_moves_since_food = moves_since_food;
+            }
+            if (moves_since_food >= 60 && gamestate == 2) {
+                cout << "something is off" << endl;
+                alive = false;
+            }
+            if (!alive) {
+                break;
+            }
+            current_moves_considered = 0;
+            getmove();
+            deadend_iterations = 0;
+            create_deadend_map();
+            check_won();
+            if (won) {
+                alive = false;
+                break;
+            }
+            moves_done ++; //statistics
+            moves_since_food ++;
+        }
+        score_list.push_back(score);
+        cout << "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n";
+        cout << score_list.size() << ": " << score << endl;
+        for (int i = 0; i < score; i++)
+            cout << "0";
+        cout << "\n";
+        int tot_score = 0;
+        int tot_score_new = 0;
+        for (int i = 0; i < score_list.size(); i++) {
+            tot_score_new = tot_score + score_list[i];
+            tot_score = tot_score_new;
+            avg_score = tot_score/(i+1);
+        }
+        cout << "avg: " << avg_score << endl;
+        if (score > current_highscore)
+            current_highscore = score;
+        cout << "max: " << current_highscore << endl;
+        sleep2();
+    }
+}
+
+int main() {
+    game();
+    return 0;
+}
