@@ -1,6 +1,7 @@
-// snake v3.3
-// full functionality STABLE version
-// subject to be merged with v4.2.1
+// v3.3 stable
+// subject to be optimized in the style of v4.1.1 MC beta
+// (remove global variables and use return functions where possible)
+// -> v4.0.1
 
 #include <iostream>
 #include <random>
@@ -50,11 +51,11 @@ bool forever = true;
 bool corner_changed;
 
 void sleep() {
-    this_thread::sleep_for(std::chrono::milliseconds(200));
+    this_thread::sleep_for(std::chrono::milliseconds(120));
 }
 
 void sleep2() {
-    this_thread::sleep_for(std::chrono::milliseconds(500));
+    this_thread::sleep_for(std::chrono::milliseconds(5000));
 }
 
 void create_board() {
@@ -319,7 +320,7 @@ void getmove1() {
  }
  */
 
-// I S S U E S 
+// I S S U E S
 /*
 void getmove2() {
     i_player_sug = i_player;
@@ -411,7 +412,7 @@ void checkmove() {
         move_ok = false;
         recalculations ++;
     } else if (j_player_sug > boardsize-1) {
-        move_ok = false;    
+        move_ok = false;
         recalculations ++;
     } else {
         move_ok = true;
@@ -891,16 +892,17 @@ void game() {
                 alive = false;
             }
             if (!alive) {
+                cout << "---------------------------"<< endl;
                 cout << "GAME OVER!" << endl;
                 break;
             }
             cout << "---------------------------"<< endl;
             cout << "game_state: " << gamestate << endl;
-            cout << "SCORE: " << score << endl;
+            cout << "SCORE: " << score << " <==" << endl;
             cout << "MOVES: " << moves_done << endl;
             cout << "moves considered tot: " << moves_considered << endl;
             cout << "moves considered now: " << current_moves_considered << endl;
-            cout << "recalculations tot: " << recalculations << endl;
+            cout << "recalculations total: " << recalculations << endl;
             cout << "moves since scored tot: " << moves_since_food << endl;
             cout << "moves since scored max: " << max_moves_since_food << endl;
             cout << "dead_end iterations: " << deadend_iterations << endl;
@@ -908,8 +910,8 @@ void game() {
             current_moves_considered = 0;
             
             if (score >= 4*boardsize-4) {
-                getmove_state3();
-                gamestate = 3;
+                getmove_state1();
+                gamestate = 1;
             } else if (score >= 2*boardsize) {
                 getmove_state1();
                 gamestate = 1;
@@ -943,14 +945,13 @@ void game() {
             cout << "highscore: " << highscore << endl;
         }
         cout << "movements: " << moves_done << endl;
-        cout << "considered: " << moves_considered << endl;
-        cout << "recalculations: " << recalculations << endl;
+        cout << "moves considered: " << moves_considered << endl;
+        cout << "recalculations total: " << recalculations << endl;
         cout << "moves since scored max: " << max_moves_since_food << endl;
+        cout << "---------------------------"<< endl;
         cout << "STATISTICS" << endl;
-        cout << "moves per score: " << moves_done/score << endl;
-        cout << "calculations p move: " << moves_considered/moves_done << endl;
-        sleep2();
-        cout << "RESTARTING . . ." << endl;
+        cout << "moves per score: " << static_cast<float>(moves_done/score) << endl;
+        cout << "calculations p move: " << static_cast<float>(moves_considered/moves_done) << endl;
         sleep2();
     }
 }
