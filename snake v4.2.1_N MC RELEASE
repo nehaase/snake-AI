@@ -1,5 +1,5 @@
-// snake v4.3_N Monte Carlo Simulation
-// STABLE RELEASE
+// snake v4.2_N Monte Carlo Simulation
+// STABLE
 
 #include <iostream>
 #include <random>
@@ -35,8 +35,8 @@ int progress_interval;
 vector<int> score_list;
 float avg_score;
 int outputmode;
-const int scores_expected_end = 63;
-const int scores_expected_start = 0;
+const int scores_expected_end = 59;
+const int scores_expected_start = 4;
 int scores[scores_expected_end];
 
 //starting position
@@ -579,7 +579,8 @@ int main() {
                     show_restarts = true;
                 else
                     show_restarts = false;
-            } // brackets are to seperate output_interval inputs
+                } // brackets are to seperate output_interval inputs
+                break;
             case 5:
                 show_restarts = true;
                 cout << "[MCQ] nr. of games (>4000): ";
