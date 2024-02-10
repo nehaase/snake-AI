@@ -1,6 +1,5 @@
 // snake v4.2_N Monte Carlo Simulation
-// STABLE
-// RELEASE VERSION
+// STABLE (pre-release version)
 
 #include <iostream>
 #include <random>
