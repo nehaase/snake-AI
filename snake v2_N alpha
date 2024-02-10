@@ -1,4 +1,5 @@
-// snake v2 completet redo
+// v2 completete own rewrite
+// alpha UNSTABLE
 
 #include <iostream>
 #include <random>
