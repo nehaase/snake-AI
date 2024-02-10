@@ -1,3 +1,3 @@
-# *neweset working version:* __v3.3 stable__
-# *monte carlo sim RELEASE VERSION:* __v4.2 MC release__
-### *work in progress:* __v4__
+# *neweset working version:* v3.3 stable
+# *monte carlo sim RELEASE VERSION:* v4.2 MC release
+### *work in progress:* v4
