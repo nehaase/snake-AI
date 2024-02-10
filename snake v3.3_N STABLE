@@ -1,4 +1,6 @@
-// snake v2 completet redo
+// snake v3.3
+// full functionality STABLE version
+// subject to be merged with v4.2.1
 
 #include <iostream>
 #include <random>
