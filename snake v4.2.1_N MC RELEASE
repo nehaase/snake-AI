@@ -1,5 +1,6 @@
 // snake v4.2_N Monte Carlo Simulation
-// STABLE
+// (stable)
+// CRITICAL BUG IN WAYFINDING!!
 
 #include <iostream>
 #include <random>
