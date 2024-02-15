@@ -1,5 +1,4 @@
-// snake v4.2_N Monte Carlo Simulation
-// (v4.2.3)
+// snake v4.2.3_N Monte Carlo Simulation
 // STABLE RELEASE
 
 // IMPORTANT BUG FIXES, IMPROVED CODE QUALITY AND UI#
