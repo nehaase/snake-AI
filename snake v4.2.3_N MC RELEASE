@@ -1,5 +1,5 @@
 // snake v4.2_N Monte Carlo Simulation
-// (v4.2.2.1)
+// (v4.2.3)
 // STABLE RELEASE
 
 // IMPORTANT BUG FIXES, IMPROVED CODE QUALITY AND UI#
@@ -601,8 +601,8 @@ void game() {
 void start_output() {
     cout << "WELCOME TO SNAKE MONTE CARLO SIMULATION BY TUM AEROSNAKE" << endl;
     cout << "========================================================" << endl;
-    cout << "v4.2.2.1: important bug fixes, improved UI" << endl;
-    cout << "==========================================" << endl;
+    cout << "v4.2.3: important bug fixes, improved UI" << endl;
+    cout << "========================================" << endl;
     cout << "mode 1: nr: score\n        avg: avg\n        max: max" << endl;
     cout << "mode 2: nr: (avg|max): 000000000 score" << endl;
     cout << "mode 3: score" << endl;
