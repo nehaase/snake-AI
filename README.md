@@ -1,3 +1,4 @@
+# HAPPY 100th COMMIT :)
 # A revolutionary Snake AGI
 
 ### _Newest working version:_ v3.4.1 STABLE
