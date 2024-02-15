@@ -1,4 +1,4 @@
-#A revolutionary Snake AGI
+# A revolutionary Snake AGI
 
 ### _Newest working version:_ v3.4.1 STABLE
 
