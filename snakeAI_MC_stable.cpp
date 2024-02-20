@@ -1,4 +1,5 @@
-// snake v4.2.3_N Monte Carlo Simulation
+// snake v4.2_N Monte Carlo Simulation
+// (v4.2.3)
 // STABLE RELEASE
 
 // IMPORTANT BUG FIXES, IMPROVED CODE QUALITY AND UI#
@@ -8,12 +9,13 @@
 #include <thread> // for time
 #include <tuple> // for multiple return values
 #include <ctime> // for time out
+#include <iomanip> // for table output
 #define SECOND 1
 #define HALF_SECOND 0,5
 #define RUNOUT_TIME 0,1
 using namespace std;
 
-const int boardsize = 21;
+const int boardsize = 11;
 int score;
 int highscore = 47;
 int current_highscore = 0;
@@ -27,11 +29,20 @@ int above_avg_percent;
 int below_avg_percent;
 int at_avg_percent;
 
-int output_interval;
-int output_counter;
-int output_index;
-int delay;
-int progress_interval;
+int measurment_interval; // time interval for measuring runtime
+int output_interval; // idk
+int output_counter; // idk
+int output_index; // hard to explain, scales MC output
+int delay; // time delay between games
+int progress_interval; // every how many games should it show the current nr when doing MC SIM
+int game_counter; // how many games have been played in time measurment interval
+int total_game_counter; // how many games have been played overall
+int seconds; // for counting how many times it has measured the programs runtime
+int move_time; // time between moves
+
+int moves_done;
+int moves_considered;
+int deadend_map_iterations;
 
 vector<int> score_list;
 double avg_score;
@@ -61,7 +72,13 @@ bool move_ideal;
 bool consider_deadend;
 bool run_games = true;
 bool show_restarts;
+bool play_with_deadendmap;
 
+
+// sleep between moves
+void sleep1() {
+    this_thread::sleep_for(std::chrono::milliseconds(move_time));
+}
 
 // sleep between completing games
 void sleep2() {
@@ -123,6 +140,7 @@ void spawn_new_food() {
     j_food = random_number_2;
 }
 
+
 // create 2D Array for dead-end map:
 // first marking all player positions and then iteratively going through the matrix and marking fields that border 3 other marked fields until no new fields are found
 void create_deadend_map() {
@@ -149,6 +167,7 @@ void create_deadend_map() {
     // iteratively mark fields that border 3 other marked fiels
     bool new_spot_found = true;
     int counter = 0;
+    deadend_map_iterations = 0;
     while (new_spot_found) {
         new_spot_found = false;
         for (int i = 1; i < boardsize+1; i++) {
@@ -179,8 +198,10 @@ void create_deadend_map() {
                 }
             }
         }
+        deadend_map_iterations ++;
     }
 }
+
 
 // checking if player has scored (player coords = food coords)
 bool check_scored() {
@@ -287,6 +308,7 @@ void getmove6() {
     j_player_sug = j_player;
     
     j_player_sug --;
+    moves_considered ++;
     
     if (check_move()) {
         i_player = i_player_sug;
@@ -309,6 +331,7 @@ void getmove5() {
     
     i_player_sug --;
     
+    moves_considered ++;
     if (check_move()) {
         i_player = i_player_sug;
         j_player = j_player_sug;
@@ -324,6 +347,7 @@ void getmove4() {
     
     j_player_sug ++;
     
+    moves_considered ++;
     if (check_move()) {
         i_player = i_player_sug;
         j_player = j_player_sug;
@@ -338,7 +362,8 @@ void getmove3() {
     j_player_sug = j_player;
     
     i_player_sug ++;
-    
+    moves_considered ++;
+
     if (check_move()) {
         i_player = i_player_sug;
         j_player = j_player_sug;
@@ -361,6 +386,7 @@ void getmove2() {
     } else if (i_player > i_food) {
         i_player_sug --;
     }
+    moves_considered ++;
     
     if (check_move()) {
         i_player = i_player_sug;
@@ -384,6 +410,7 @@ void getmove1() {
     } else if (j_player > j_food) {
         j_player_sug --;
     }
+    moves_considered ++;
     
     if (check_move()) {
         i_player = i_player_sug;
@@ -397,11 +424,19 @@ void getmove1() {
 // first considering dead-ends
 // then again without
 void getmove() {
-    consider_deadend = true;
-    getmove1();
-    if (!consider_deadend) { // <- BUG FIX
+    if (play_with_deadendmap) {
+        consider_deadend = true;
+        getmove1();
+        if (!consider_deadend) { // <- BUG FIX
+            getmove1();
+        }
+    } else {
+        consider_deadend = false;
         getmove1();
     }
+    
+    
+    moves_done ++;
 }
 
 // output mode 4:
@@ -485,7 +520,7 @@ void outputmode_5() {
         cout << output_counter << endl;
         output_counter ++;
     } else { // BETTER OUTPUT FORMATING !!
-        cout << score_list.size() << ": (" << avg_score << "|" << current_highscore << ") (" << below_avg_percent << "|" << at_avg_percent << "|" << above_avg_percent << "): ";
+        cout << score_list.size() << ": (" << left << setw(7) << avg_score << "|" << current_highscore << ") (" << below_avg_percent << "|" << at_avg_percent << "|" << above_avg_percent << "): ";
         for (int i = 1; i <= score; i++) {
             cout << "#";
         }
@@ -493,6 +528,46 @@ void outputmode_5() {
         output_counter ++;
     }
 }
+
+void outputmode_6() {
+    cout << left << "gps: " << setw(6) << game_counter << "avg: " << (total_game_counter/((measurment_interval/1000)*seconds)) << endl;
+}
+
+void outputmode_7() {
+    for (int k = 1; k < (2*boardsize); k++) {
+        cout << "-";
+    }
+    cout << "\n";
+    
+    cout << setw(20) << "score: " << score << endl;
+    cout << setw(20) << "moves done: " << moves_done << endl;
+    cout << setw(20) << "moves considered: " << moves_considered << endl;
+    cout << setw(20) << "deadend iterations: " << deadend_map_iterations << endl;
+
+    
+    for (int k = 1; k < (2*boardsize); k++) {
+        cout << "-";
+    }
+    cout << "\n";
+    
+    for (int i = 0; i < boardsize; i++) {
+        for (int j = 0; j < boardsize; j++) {
+            if (player_map[i][j] != 0) {
+                cout << "0 ";
+            } else {
+                if (i == i_food && j == j_food) {
+                    cout << "X ";
+                } else if (deadend_map[i+1][j+1] != 0) {
+                    cout << "+ ";
+                } else {
+                    cout << "- ";
+                }
+            }
+        }
+        cout << "\n";
+    }
+}
+
 
 // different output modes to choose from in the beginning
 void output() {
@@ -507,7 +582,7 @@ void output() {
             break;
             
         case 2:
-            cout << score_list.size() << ": (" << avg_score << "|" << current_highscore << ") (" << below_avg_percent << "|" << at_avg_percent << "|" << above_avg_percent << "): ";
+            cout << score_list.size() << ": ("  << left << setw(7) << avg_score << "|" << current_highscore << ") (" << below_avg_percent << "|" << at_avg_percent << "|" << above_avg_percent << "): ";
             for (int i = 1; i <= score; i++) {
                 cout << "#";
             }
@@ -524,7 +599,6 @@ void output() {
         case 5:
             outputmode_5();
             break;
-            
     }
 }
 
@@ -538,11 +612,15 @@ void resets() {
     i_player = (boardsize-1)/2;
     j_player = (boardsize-1)/2;
     avg_score = 0;
+    moves_done = 0;
+    moves_considered = 0;
 }
 
 // updating statistics and storing result values
 void ingame_updates() {
     score_list.push_back(score);
+    game_counter ++;
+    total_game_counter ++;
     int tot_score = 0;
     int tot_score_new = 0;
     for (int i = 0; i < score_list.size(); i++) {
@@ -566,11 +644,13 @@ void ingame_updates() {
 
 // game loop
 void game() {
+    clock_t start_measure = clock();
+    clock_t now_measure;
     while (run_games) {
         resets();
         // restart clock
-        clock_t start = clock();
-        clock_t now;
+        clock_t start_timeout = clock();
+        clock_t now_timeout;
 
         while (alive && check_alive()) { // also consider timeout-kill
             if (check_scored())
@@ -578,16 +658,33 @@ void game() {
             else
                 update_player();
             player_map[i_player][j_player] = score; //draw new player position
-            create_deadend_map();
+            if (play_with_deadendmap)
+                create_deadend_map();
             getmove();
             
-            now = clock();
-            if (((now-start)/CLOCKS_PER_SEC) >= SECOND) { // check runtime / timeout
+            now_timeout = clock();
+            if (((now_timeout-start_timeout)/CLOCKS_PER_SEC) >= SECOND) { // check runtime / timeout
                 alive = false;
                 if (show_restarts)
                     cout << "[MCS] system timed out - restarting..." << endl;
-                //sleep3();
+                sleep3();
+                start_measure = clock();
                 break;
+            }
+            if (outputmode == 6) {
+                now_measure = clock();
+                if (((now_measure-start_measure)/CLOCKS_PER_SEC) >= ((SECOND*measurment_interval)/1000)) {
+                    outputmode_6();
+                    alive = false;
+                    game_counter = 0;
+                    seconds ++;
+                    start_measure = clock();
+                    break;
+                }
+            }
+            if (outputmode == 7) {
+                outputmode_7();
+                sleep1();
             }
         }
         ingame_updates();
@@ -607,6 +704,8 @@ void start_output() {
     cout << "mode 3: score" << endl;
     cout << "mode 4: monte carlo simulation" << endl;
     cout << "mode 5: mode 2 & mode 4" << endl;
+    cout << "mode 6: time measurement" << endl;
+    cout << "mode 7: classical snake game" << endl;
     cout << "--------------------------------" << endl;
 }
 
@@ -645,6 +744,18 @@ void get_inputs() {
             cout << "[MCQ] output index (4000/5000): ";
             cin >> output_index;
             break;
+        case 6:
+            cout << "[MCQ] enter time interval to measure (milliseconds): ";
+            cin >> measurment_interval;
+            total_game_counter = 0;
+            seconds = 1;
+            show_restarts = true;
+            break;
+        case 7:
+            cout << "[MCQ] move time (milliseconds): ";
+            cin >> move_time;
+            cout << "[MCQ] reboot time (milliseconds): ";
+            cin >> delay;
         default:
             cout << "[MCE] ERROR (101): UNABLE TO IDENTIFIE OUTPUTMODE" << endl;
     }
@@ -653,15 +764,31 @@ void get_inputs() {
 // main function: choosing output mode, getting input values, running games
 int main() {
     start_output();
-    cout << "[MCQ] choose output mode: ";
-    cin >> outputmode;
-    if (outputmode >= 1 && outputmode <= 5) {
-        get_inputs();
-        cout << "[MCQ] enter time delay (milliseconds): ";
-        cin >> delay;
-        game();
-    } else {
-        cout << "[MCE] ERROR (102): UNABLE TO IDENTIFIE OUTPUT MODE" << endl;
-    }
+    bool correct_input;
+    do {
+        cout << "[MCQ] choose output mode: ";
+        cin >> outputmode;
+        correct_input = true;
+        if (outputmode >= 1 && outputmode <= 5) {
+            get_inputs();
+            cout << "[MCQ] enter time delay (milliseconds): ";
+            cin >> delay;
+            cout << "[MCQ] play with deadend maps? (y/n): ";
+            string input;
+            cin >> input;
+            if (input == "n") {
+                play_with_deadendmap = false;
+            } else {
+                play_with_deadendmap = true;
+            }
+            game();
+        } else if (outputmode == 6 || outputmode == 7){
+            get_inputs();
+            game();
+        } else {
+            cout << "[MCE] ERROR (102): UNABLE TO IDENTIFIE OUTPUT MODE" << endl;
+            correct_input = false;
+        }
+    } while (!correct_input);
     return 0;
 }
