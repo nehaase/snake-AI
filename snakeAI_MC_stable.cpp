@@ -51,6 +51,11 @@ const int scores_expected_end = 91;
 const int scores_expected_start = 4;
 int scores[scores_expected_end];
 
+clock_t time_getmove;
+clock_t time_getmove_e;
+clock_t time_deadend;
+clock_t time_deadend_e;
+
 // player position
 int i_player;
 int j_player;
@@ -568,6 +573,10 @@ void outputmode_7() {
     }
 }
 
+void outputmode_8() {
+    cout << left << setw(7) << score << left << setw(7) << moves_considered << left << setw(7) << (time_getmove_e - time_getmove) << (time_deadend_e - time_deadend) << endl;
+}
+
 
 // different output modes to choose from in the beginning
 void output() {
@@ -599,6 +608,10 @@ void output() {
         case 5:
             outputmode_5();
             break;
+        case 8:
+            outputmode_8();
+            break;
+
     }
 }
 
@@ -658,9 +671,14 @@ void game() {
             else
                 update_player();
             player_map[i_player][j_player] = score; //draw new player position
-            if (play_with_deadendmap)
+            if (play_with_deadendmap) {
+                time_deadend = clock(); // measuring how long get-deadend-map takes
                 create_deadend_map();
+                time_deadend_e = clock();
+            }
+            time_getmove = clock(); // measuring how long getmove takes
             getmove();
+            time_getmove_e = clock();
             
             now_timeout = clock();
             if (((now_timeout-start_timeout)/CLOCKS_PER_SEC) >= SECOND) { // check runtime / timeout
@@ -705,7 +723,8 @@ void start_output() {
     cout << "mode 4: monte carlo simulation" << endl;
     cout << "mode 5: mode 2 & mode 4" << endl;
     cout << "mode 6: time measurement" << endl;
-    cout << "mode 7: classical snake game" << endl;
+    cout << "mode 7: CLASSICAL SNAKE GAME" << endl;
+    cout << "mode 8: statistics for manu" << endl;
     cout << "--------------------------------" << endl;
 }
 
@@ -775,6 +794,10 @@ void get_inputs() {
             }
             break;
         }
+        case 8: {
+            cout << "hi" << endl;
+        }
+
         default:
             cout << "[MCE] ERROR (101): UNABLE TO IDENTIFIE OUTPUTMODE" << endl;
     }
@@ -801,7 +824,7 @@ int main() {
                 play_with_deadendmap = true;
             }
             game();
-        } else if (outputmode == 6 || outputmode == 7){
+        } else if (outputmode >= 6 && outputmode <= 8){
             get_inputs();
             game();
         } else {
