@@ -526,9 +526,9 @@ void outputmode_5() {
         output_counter ++;
     } else { // BETTER OUTPUT FORMATING !!
         cout << score_list.size() << ": (" << left << setw(7) << avg_score << "|" << current_highscore << ") (" << below_avg_percent << "|" << at_avg_percent << "|" << above_avg_percent << "): ";
-        for (int i = 1; i <= score; i++) {
+        /* for (int i = 1; i <= score; i++) {
             cout << "#";
-        }
+        } */
         cout << " " << score << endl;
         output_counter ++;
     }
