@@ -685,6 +685,10 @@ void game() {
                 alive = false;
                 if (show_restarts)
                     cout << "[MCS] system timed out - restarting..." << endl;
+                if (outputmode == 8) {
+                    run_games = false;
+                    break;
+                }
                 sleep3();
                 start_measure = clock();
                 break;
