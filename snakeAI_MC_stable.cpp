@@ -744,18 +744,37 @@ void get_inputs() {
             cout << "[MCQ] output index (4000/5000): ";
             cin >> output_index;
             break;
-        case 6:
+        case 6: {
             cout << "[MCQ] enter time interval to measure (milliseconds): ";
             cin >> measurment_interval;
             total_game_counter = 0;
             seconds = 1;
             show_restarts = true;
+            cout << "[MCQ] play with deadend maps? (y/n): ";
+            string input;
+            cin >> input;
+            if (input == "n") {
+                play_with_deadendmap = false;
+            } else {
+                play_with_deadendmap = true;
+            }
             break;
-        case 7:
+        }
+        case 7: {
             cout << "[MCQ] move time (milliseconds): ";
             cin >> move_time;
             cout << "[MCQ] reboot time (milliseconds): ";
             cin >> delay;
+            cout << "[MCQ] play with deadend maps? (y/n): ";
+            string input;
+            cin >> input;
+            if (input == "n") {
+                play_with_deadendmap = false;
+            } else {
+                play_with_deadendmap = true;
+            }
+            break;
+        }
         default:
             cout << "[MCE] ERROR (101): UNABLE TO IDENTIFIE OUTPUTMODE" << endl;
     }
