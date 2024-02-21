@@ -574,7 +574,7 @@ void outputmode_7() {
 }
 
 void outputmode_8() {
-    cout << left << setw(7) << game_counter << left << setw(7) << score << left << setw(7) << moves_considered << left << setw(7) << (time_getmove_e - time_getmove) << (time_deadend_e - time_deadend) << endl;
+    cout << left << setw(7) << output_counter << ", " << left << setw(7) << score << ", " << left << setw(7) << moves_considered << ", " << left << setw(7) << (time_getmove_e - time_getmove) << ", " << (time_deadend_e - time_deadend) << endl;
 }
 
 
