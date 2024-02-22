@@ -56,8 +56,7 @@ const int scores_expected_end = 91;
 const int scores_expected_start = 4;
 int scores[scores_expected_end];
 
-int time_getmove;
-int time_deadend;
+double time_game;
 
 // player position
 int i_player;
@@ -577,7 +576,7 @@ void outputmode_7() {
 }
 
 void outputmode_8() {
-    cout << game_counter << ", " << score << ", " << moves_considered << ", " << time_getmove << ", " << time_deadend << endl;
+    cout << game_counter << ", " << score << ", " << moves_considered << ", " << time_game << endl;
 }
 
 
@@ -663,10 +662,12 @@ void game() {
     clock_t start_measure = clock();
     clock_t now_measure;
     while (run_games) {
-        resets();
-        // restart clock
+        high_resolution_clock::time_point start = high_resolution_clock::now();
+        // restart clocks
         clock_t start_timeout = clock();
         clock_t now_timeout;
+
+        resets();
 
         while (alive && check_alive()) { // also consider timeout-kill
             if (check_scored())
@@ -674,19 +675,11 @@ void game() {
             else
                 update_player();
             player_map[i_player][j_player] = score; //draw new player position
-            if (play_with_deadendmap) {
-                high_resolution_clock::time_point start = high_resolution_clock::now(); // measuring how long get-deadend-map takes
+            if (play_with_deadendmap)
                 create_deadend_map();
-                high_resolution_clock::time_point end = high_resolution_clock::now();
-                duration<double> duration = duration_cast<nanoseconds>(end - start);;
-                time_deadend = (duration.count()*1000000000000);
-            }
-            high_resolution_clock::time_point start = high_resolution_clock::now(); // measuring how long getmove takes
-            getmove();
-            high_resolution_clock::time_point end = high_resolution_clock::now();
-            duration<double> duration = duration_cast<nanoseconds>(end - start);
-            time_getmove = (duration.count()*1000000000);
 
+            getmove();
+daddr_t
             now_timeout = clock();
             if (((now_timeout-start_timeout)/CLOCKS_PER_SEC) >= SECOND) { // check runtime / timeout
                 alive = false;
@@ -716,6 +709,9 @@ void game() {
                 sleep1();
             }
         }
+        high_resolution_clock::time_point end = high_resolution_clock::now();
+        duration<double> duration = duration_cast<nanoseconds>(end - start);
+        time_game = duration.count();
         ingame_updates();
         output();
         sleep2();
