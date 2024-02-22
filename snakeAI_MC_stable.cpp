@@ -679,13 +679,13 @@ void game() {
                 create_deadend_map();
                 high_resolution_clock::time_point end = high_resolution_clock::now();
                 duration<double> duration = duration_cast<nanoseconds>(end - start);;
-                time_deadend = duration.count();
+                time_deadend = (duration.count()*1000000);
             }
             high_resolution_clock::time_point start = high_resolution_clock::now(); // measuring how long getmove takes
             getmove();
             high_resolution_clock::time_point end = high_resolution_clock::now();
             duration<double> duration = duration_cast<nanoseconds>(end - start);
-            time_getmove = duration.count();
+            time_getmove = (duration.count()*1000000);
 
             now_timeout = clock();
             if (((now_timeout-start_timeout)/CLOCKS_PER_SEC) >= SECOND) { // check runtime / timeout
@@ -808,6 +808,7 @@ void get_inputs() {
         case 8: {
             cout << "hi" << endl;
             cout << "game_nr, score, moves_considered, deadend_time, getmove_time" << endl;
+            sleep3();
         }
 
         default:
