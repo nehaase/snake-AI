@@ -56,8 +56,8 @@ const int scores_expected_end = 91;
 const int scores_expected_start = 4;
 int scores[scores_expected_end];
 
-int time_getmove;
-int time_deadend;
+double time_getmove;
+double time_deadend;
 
 // player position
 int i_player;
@@ -577,7 +577,7 @@ void outputmode_7() {
 }
 
 void outputmode_8() {
-    cout << game_counter << ", " << score << ", " << moves_considered << ", " << (time_getmove) << ", " << (time_deadend) << endl;
+    cout << game_counter << ", " << score << ", " << moves_considered << ", " << time_getmove << ", " << time_deadend << endl;
 }
 
 
