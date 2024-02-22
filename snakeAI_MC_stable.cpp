@@ -11,6 +11,8 @@
 #include <ctime> // for time out
 #include <iomanip> // for table output
 #include <chrono> // for high resolution clock
+#include <fstream> // for .csv data output
+
 #define SECOND 1
 #define HALF_SECOND 0,5
 #define RUNOUT_TIME 0,1
@@ -576,7 +578,14 @@ void outputmode_7() {
 }
 
 void outputmode_8() {
-    cout << game_counter << ", " << score << ", " << moves_considered << ", " << time_game << endl;
+    switch (output_counter) {
+    case 1:
+        ofstream csv_datei("snake_stats");
+        csv_datei << "game_nr, score, moves_considered, deadend_time, getmove_time" << endl;
+    default:
+        csv_datei << game_counter << ", " << score << ", " << moves_considered << ", " << time_game << endl;
+        break;
+    }
 }
 
 
@@ -802,8 +811,6 @@ void get_inputs() {
             break;
         }
         case 8: {
-            cout << "hi" << endl;
-            cout << "game_nr, score, moves_considered, deadend_time, getmove_time" << endl;
             sleep3();
         }
 
