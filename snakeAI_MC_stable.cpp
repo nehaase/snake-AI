@@ -50,7 +50,9 @@ int move_time; // time between moves
 int moves_done;
 int moves_considered;
 int deadend_map_iterations;
+int deadend_map_iterations_total;
 
+vector<int> deadend_map_iterations_list;
 vector<int> moves_done_list;
 vector<int> moves_considered_list;
 vector<double> runtime_list;
@@ -212,6 +214,7 @@ void create_deadend_map() {
             }
         }
         deadend_map_iterations ++;
+        deadend_map_iterations_total ++;
     }
 }
 
@@ -583,7 +586,7 @@ void outputmode_7() {
 
 void outputmode_8() {
     ofstream csv_datei("snake_stats");
-    csv_datei << "game_nr, score, moves_considered,runtime" << endl;
+    csv_datei << "game_nr, score, mov_done, mov_consid, runtime" << endl;
     for (int i = 1; i < score_list.size(); i++) {
         csv_datei << "" << i << "," << score_list[i] << "," << moves_done_list[i] << "," << moves_considered_list[i] << "," << runtime_list[i] << endl;
     }
@@ -638,6 +641,7 @@ void resets() {
     avg_score = 0;
     moves_done = 0;
     moves_considered = 0;
+    deadend_map_iterations_total = 0;
 }
 
 // updating statistics and storing result values
@@ -645,6 +649,8 @@ void ingame_updates() {
     score_list.push_back(score);
     moves_done_list.push_back(moves_done);
     moves_considered_list.push_back(moves_considered);
+    deadend_map_iterations_list.push_back(deadend_map_iterations_total);
+
     game_counter ++;
     total_game_counter ++;
     int tot_score = 0;
