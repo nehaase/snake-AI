@@ -582,9 +582,10 @@ void outputmode_7() {
 
 void outputmode_8() {
     ofstream csv_datei("snake_stats");
-    csv_datei << "game_nr, score, moves_considered, deadend_time, getmove_time" << endl;
-    for (int i = 1; i < score_list.size(); i++)
-        csv_datei << i << "," << score_list[i] << "," << moves_considered_list[i] << "," << runtime_list[i] << endl;
+    csv_datei << "game_nr, score, moves_considered,runtime" << endl;
+    for (int i = 1; i < score_list.size(); i++) {
+        csv_datei << "" << i << "," << score_list[i] << "," << moves_considered_list[i] << "," << runtime_list[i] << endl;
+    }
     csv_datei.close();
 }
 
@@ -619,6 +620,8 @@ void output() {
         case 5:
             outputmode_5();
             break;
+        case 8:
+            cout << game_counter << "," << score << "," << moves_considered << "," << time_game << endl;
     }
 }
 
@@ -639,6 +642,7 @@ void resets() {
 // updating statistics and storing result values
 void ingame_updates() {
     score_list.push_back(score);
+    moves_considered_list.push_back(moves_considered);
     game_counter ++;
     total_game_counter ++;
     int tot_score = 0;
@@ -684,7 +688,7 @@ void game() {
                 create_deadend_map();
 
             getmove();
-daddr_t
+
             now_timeout = clock();
             if (((now_timeout-start_timeout)/CLOCKS_PER_SEC) >= SECOND) { // check runtime / timeout
                 alive = false;
@@ -717,6 +721,7 @@ daddr_t
         }
         high_resolution_clock::time_point end = high_resolution_clock::now();
         duration<double> duration = duration_cast<nanoseconds>(end - start);
+        time_game = duration.count();
         runtime_list.push_back(duration.count());
         ingame_updates();
         output();
@@ -808,7 +813,8 @@ void get_inputs() {
             break;
         }
         case 8: {
-            sleep3();
+            cout << "[MCQ] running games. this can take a few moments." << endl;
+            play_with_deadendmap = true;
             break;
         }
 
