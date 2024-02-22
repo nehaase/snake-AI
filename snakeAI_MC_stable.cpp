@@ -52,10 +52,6 @@ const int scores_expected_end = 91;
 const int scores_expected_start = 4;
 int scores[scores_expected_end];
 
-clock_t time_getmove;
-clock_t time_getmove_e;
-clock_t time_deadend;
-clock_t time_deadend_e;
 int time_getmove;
 int time_deadend;
 
