@@ -685,7 +685,7 @@ void game() {
             getmove();
             high_resolution_clock::time_point end = high_resolution_clock::now();
             duration<double> duration = duration_cast<nanoseconds>(end - start);
-            time_getmove = (duration.count()*1000000000);
+            time_getmove = (duration.count()*1000000000000);
 
             now_timeout = clock();
             if (((now_timeout-start_timeout)/CLOCKS_PER_SEC) >= SECOND) { // check runtime / timeout
