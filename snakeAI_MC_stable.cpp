@@ -573,7 +573,7 @@ void outputmode_7() {
 }
 
 void outputmode_8() {
-    cout << game_counter << ", " << score << ", " << moves_considered << ", " << (time_getmove_e - time_getmove) << ", " << (time_deadend_e - time_deadend) << endl;
+    cout << game_counter << ", " << score << ", " << moves_considered << ", " << (time_getmove) << ", " << (time_deadend) << endl;
 }
 
 
