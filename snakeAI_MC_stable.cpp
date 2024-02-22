@@ -51,6 +51,8 @@ int moves_done;
 int moves_considered;
 int deadend_map_iterations;
 
+vector<int> moves_considered_list;
+vector<double> runtime_list;
 vector<int> score_list;
 double avg_score;
 int outputmode;
@@ -82,6 +84,7 @@ bool consider_deadend;
 bool run_games = true;
 bool show_restarts;
 bool play_with_deadendmap;
+
 
 
 // sleep between moves
@@ -578,14 +581,11 @@ void outputmode_7() {
 }
 
 void outputmode_8() {
-    switch (output_counter) {
-    case 1:
-        ofstream csv_datei("snake_stats");
-        csv_datei << "game_nr, score, moves_considered, deadend_time, getmove_time" << endl;
-    default:
-        csv_datei << game_counter << ", " << score << ", " << moves_considered << ", " << time_game << endl;
-        break;
-    }
+    ofstream csv_datei("snake_stats");
+    csv_datei << "game_nr, score, moves_considered, deadend_time, getmove_time" << endl;
+    for (int i = 1; i < score_list.size(); i++)
+        csv_datei << i << "," << score_list[i] << "," << moves_considered_list[i] << "," << runtime_list[i] << endl;
+    csv_datei.close();
 }
 
 
@@ -619,10 +619,6 @@ void output() {
         case 5:
             outputmode_5();
             break;
-        case 8:
-            outputmode_8();
-            break;
-
     }
 }
 
@@ -696,6 +692,7 @@ daddr_t
                     cout << "[MCS] system timed out - restarting..." << endl;
                 if (outputmode == 8) {
                     run_games = false;
+                    outputmode_8();
                     break;
                 }
                 sleep3();
@@ -720,7 +717,7 @@ daddr_t
         }
         high_resolution_clock::time_point end = high_resolution_clock::now();
         duration<double> duration = duration_cast<nanoseconds>(end - start);
-        time_game = duration.count();
+        runtime_list.push_back(duration.count());
         ingame_updates();
         output();
         sleep2();
@@ -812,6 +809,7 @@ void get_inputs() {
         }
         case 8: {
             sleep3();
+            break;
         }
 
         default:
