@@ -10,6 +10,7 @@
 #include <tuple> // for multiple return values
 #include <ctime> // for time out
 #include <iomanip> // for table output
+#include <chrono> // for high resolution clock
 #define SECOND 1
 #define HALF_SECOND 0,5
 #define RUNOUT_TIME 0,1
@@ -55,6 +56,8 @@ clock_t time_getmove;
 clock_t time_getmove_e;
 clock_t time_deadend;
 clock_t time_deadend_e;
+int time_getmove;
+int time_deadend;
 
 // player position
 int i_player;
@@ -574,7 +577,7 @@ void outputmode_7() {
 }
 
 void outputmode_8() {
-    cout << left << setw(10) << game_counter << ", " << left << setw(7) << score << ", " << left << setw(7) << moves_considered << ", " << left << setw(7) << (time_getmove_e - time_getmove) << ", " << (time_deadend_e - time_deadend) << endl;
+    cout << game_counter << ", " << score << ", " << moves_considered << ", " << (time_getmove_e - time_getmove) << ", " << (time_deadend_e - time_deadend) << endl;
 }
 
 
@@ -672,14 +675,18 @@ void game() {
                 update_player();
             player_map[i_player][j_player] = score; //draw new player position
             if (play_with_deadendmap) {
-                time_deadend = clock(); // measuring how long get-deadend-map takes
+                auto start = std::chrono::high_resolution_clock::now(); // measuring how long get-deadend-map takes
                 create_deadend_map();
-                time_deadend_e = clock();
+                auto end = std::chrono::high_resolution_clock::now();
+                auto duration = std::chrono::duration_cast<std::chrono::nanoseconds>(end - start);
+                time_deadend = duration.count();
             }
-            time_getmove = clock(); // measuring how long getmove takes
+            auto start = std::chrono::high_resolution_clock::now(); // measuring how long getmove takes
             getmove();
-            time_getmove_e = clock();
-            
+            auto end = std::chrono::high_resolution_clock::now();
+            auto duration = std::chrono::duration_cast<std::chrono::nanoseconds>(end - start);
+            time_getmove = duration.count();
+
             now_timeout = clock();
             if (((now_timeout-start_timeout)/CLOCKS_PER_SEC) >= SECOND) { // check runtime / timeout
                 alive = false;
@@ -800,6 +807,7 @@ void get_inputs() {
         }
         case 8: {
             cout << "hi" << endl;
+            cout << "game_nr, score, moves_considered, deadend_time, getmove_time" << endl;
         }
 
         default:
