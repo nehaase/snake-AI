@@ -56,8 +56,8 @@ const int scores_expected_end = 91;
 const int scores_expected_start = 4;
 int scores[scores_expected_end];
 
-double time_getmove;
-double time_deadend;
+int time_getmove;
+int time_deadend;
 
 // player position
 int i_player;
