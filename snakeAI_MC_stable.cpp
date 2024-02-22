@@ -51,6 +51,7 @@ int moves_done;
 int moves_considered;
 int deadend_map_iterations;
 
+vector<int> moves_done_list;
 vector<int> moves_considered_list;
 vector<double> runtime_list;
 vector<int> score_list;
@@ -584,7 +585,7 @@ void outputmode_8() {
     ofstream csv_datei("snake_stats");
     csv_datei << "game_nr, score, moves_considered,runtime" << endl;
     for (int i = 1; i < score_list.size(); i++) {
-        csv_datei << "" << i << "," << score_list[i] << "," << moves_considered_list[i] << "," << runtime_list[i] << endl;
+        csv_datei << "" << i << "," << score_list[i] << "," << moves_done_list[i] << "," << moves_considered_list[i] << "," << runtime_list[i] << endl;
     }
     csv_datei.close();
 }
@@ -642,6 +643,7 @@ void resets() {
 // updating statistics and storing result values
 void ingame_updates() {
     score_list.push_back(score);
+    moves_done_list.push_back(moves_done);
     moves_considered_list.push_back(moves_considered);
     game_counter ++;
     total_game_counter ++;
