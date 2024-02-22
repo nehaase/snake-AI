@@ -14,7 +14,11 @@
 #define SECOND 1
 #define HALF_SECOND 0,5
 #define RUNOUT_TIME 0,1
+
 using namespace std;
+using namespace chrono;
+
+#define chronClock chronehigh_resolution_clock;
 
 const int boardsize = 11;
 int score;
@@ -38,7 +42,7 @@ int delay; // time delay between games
 int progress_interval; // every how many games should it show the current nr when doing MC SIM
 int game_counter; // how many games have been played in time measurment interval
 int total_game_counter; // how many games have been played overall
-int seconds; // for counting how many times it has measured the programs runtime
+int total_round_past_seconds_interval_counter; // for counting how many times it has measured the programs runtime
 int move_time; // time between moves
 
 int moves_done;
@@ -81,17 +85,17 @@ bool play_with_deadendmap;
 
 // sleep between moves
 void sleep1() {
-    this_thread::sleep_for(std::chrono::milliseconds(move_time));
+    this_thread::sleep_for(milliseconds(move_time));
 }
 
 // sleep between completing games
 void sleep2() {
-    this_thread::sleep_for(std::chrono::milliseconds(delay));
+    this_thread::sleep_for(milliseconds(delay));
 }
 
 // sleep after timing out and before restarting
 void sleep3() {
-    this_thread::sleep_for(std::chrono::milliseconds(1000));
+    this_thread::sleep_for(milliseconds(1000));
 }
 
 // create 2D Array for board
@@ -534,7 +538,7 @@ void outputmode_5() {
 }
 
 void outputmode_6() {
-    cout << left << "gps: " << setw(6) << game_counter << "avg: " << (total_game_counter/((measurment_interval/1000)*seconds)) << endl;
+    cout << left << "gps: " << setw(6) << game_counter << "avg: " << (total_game_counter/((measurment_interval/1000)*total_round_past_seconds_interval_counter)) << endl;
 }
 
 void outputmode_7() {
@@ -671,16 +675,16 @@ void game() {
                 update_player();
             player_map[i_player][j_player] = score; //draw new player position
             if (play_with_deadendmap) {
-                auto start = std::chrono::high_resolution_clock::now(); // measuring how long get-deadend-map takes
+                high_resolution_clock::time_point start = high_resolution_clock::now(); // measuring how long get-deadend-map takes
                 create_deadend_map();
-                auto end = std::chrono::high_resolution_clock::now();
-                auto duration = std::chrono::duration_cast<std::chrono::nanoseconds>(end - start);
+                high_resolution_clock::time_point end = high_resolution_clock::now();
+                duration<double> duration = duration_cast<nanoseconds>(end - start);;
                 time_deadend = duration.count();
             }
-            auto start = std::chrono::high_resolution_clock::now(); // measuring how long getmove takes
+            high_resolution_clock::time_point start = high_resolution_clock::now(); // measuring how long getmove takes
             getmove();
-            auto end = std::chrono::high_resolution_clock::now();
-            auto duration = std::chrono::duration_cast<std::chrono::nanoseconds>(end - start);
+            high_resolution_clock::time_point end = high_resolution_clock::now();
+            duration<double> duration = duration_cast<nanoseconds>(end - start);
             time_getmove = duration.count();
 
             now_timeout = clock();
@@ -702,7 +706,7 @@ void game() {
                     outputmode_6();
                     alive = false;
                     game_counter = 0;
-                    seconds ++;
+                    total_round_past_seconds_interval_counter ++;
                     start_measure = clock();
                     break;
                 }
@@ -774,7 +778,7 @@ void get_inputs() {
             cout << "[MCQ] enter time interval to measure (milliseconds): ";
             cin >> measurment_interval;
             total_game_counter = 0;
-            seconds = 1;
+            total_round_past_seconds_interval_counter = 1;
             show_restarts = true;
             cout << "[MCQ] play with deadend maps? (y/n): ";
             string input;
