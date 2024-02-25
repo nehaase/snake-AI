@@ -85,25 +85,32 @@ void update_player() {
 
 void spawn_new_food() {
     bool free_space = false;
-    int random_number_1 = 0;
-    int random_number_2 = 0;
+    int randPosX = 0;
+    int randPosY = 0;
     while (!free_space) {
         random_device rd;
         mt19937 gen(rd());
         uniform_int_distribution<> distribution(0, boardsize-1);
-        random_number_1 = distribution(gen);
-        random_number_2 = distribution(gen);
+        randPosX = distribution(gen);
+        randPosY = distribution(gen);
         
         //check if free space
-        if (food_map[random_number_1][random_number_2] == 0 && player_map[random_number_1][random_number_2] == 0) {
+        bool cond1 = food_map[randPosX][randPosY] == 0;
+        bool cond2 = player_map[randPosX][randPosY] == 0;
+        if (cond1 && cond2) {
             free_space = true;
-            food_map[random_number_1][random_number_2] = -1;
+            food_map[randPosX][randPosY] = -1;
         }
     }
-    i_food = random_number_1;
-    j_food = random_number_2;
+    // What is going on HERE????
+    // DONT USE GLOBALS //
+    i_food = randPosX;
+    j_food = randPosY;
 }
 
+/**
+ * Draws the board for the game, displaying the state of each cell and the location of the food.
+ */
 void draw_board() {
     for (int i = 0; i < boardsize; i++) {
         for (int j = 0; j < boardsize; j++) {
@@ -448,6 +455,7 @@ void resets() {
     create_player();
     create_board();
     scored = true;
+    // Center snake on the board
     i_player = (boardsize-1)/2;
     j_player = (boardsize-1)/2;
     score = 1;
