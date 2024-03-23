@@ -502,7 +502,7 @@ void outputmode_4() {
     }
 }
 
-// output mdoe 5:
+// output mode 5:
 // monte carlo simulation with probability curve and constant output monitoring
 void outputmode_5() {
     if (output_counter == 1) {
